@@ -34,7 +34,6 @@
   .video-layer.active { opacity: 1; z-index: 2; }
   .video-layer.fading-out { opacity: 0; z-index: 1; }
 
-  /* Infinity: two identical videos crossfading for seamless loop */
   .infinity-layer {
     position: fixed;
     top: 50%; left: 50%;
@@ -176,6 +175,18 @@
   #replay-btn.visible { opacity: 1; pointer-events: auto; }
   #replay-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.3); }
 
+  #mute-btn {
+    position: fixed; bottom: 1.8rem; right: 1.8rem;
+    z-index: 40; width: 36px; height: 36px;
+    background: none; border: none; cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transition: opacity 2s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #mute-btn.visible { opacity: 1; pointer-events: auto; }
+  #mute-btn svg { width: 18px; height: 18px; fill: rgba(255,255,255,0.25); transition: fill 0.3s ease; }
+  #mute-btn:hover svg { fill: rgba(255,255,255,0.5); }
+
   #loading {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; z-index: 150;
@@ -202,15 +213,17 @@
   <div class="play-hint">toque para iniciar</div>
 </div>
 
-<!-- Phase videos -->
 <video id="vid-forest" class="video-layer" muted playsinline preload="auto" src="forest.mp4"></video>
 <video id="vid-ocean"  class="video-layer" muted playsinline preload="auto" loop src="ocean.mp4"></video>
 <video id="vid-sky"    class="video-layer" muted playsinline preload="auto" loop src="sky.mp4"></video>
 <video id="vid-space"  class="video-layer" muted playsinline preload="auto" src="space.mp4"></video>
 
-<!-- Infinity: two copies for seamless crossfade loop -->
 <video id="inf-a" class="infinity-layer" muted playsinline preload="auto" src="infinity.mp4"></video>
 <video id="inf-b" class="infinity-layer" muted playsinline preload="auto" src="infinity.mp4"></video>
+
+<!-- Main music + ambient loop copy -->
+<audio id="music-main" preload="auto" src="music.mp3"></audio>
+<audio id="music-loop" preload="auto" src="music.mp3" loop></audio>
 
 <div id="fade-to-black"></div>
 <div class="vignette"></div>
@@ -232,28 +245,53 @@
 
 <div id="progress-bar"></div>
 
+<button id="mute-btn" title="Mutar/Desmutar">
+  <svg id="icon-sound" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+  </svg>
+  <svg id="icon-muted" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+  </svg>
+</button>
+
 <script>
 (function() {
   'use strict';
 
+  // ═══════════════════════════════════
+  //  CONFIG
+  // ═══════════════════════════════════
+
   const PHASES = [
     { id:'forest', videoStart:0, videoEnd:10, textStart:1.5, textEnd:8.5,
       text:"Entre milhões de caminhos possíveis…\neu encontrei você.",
-      grade:'linear-gradient(180deg,rgba(30,60,30,.25) 0%,transparent 50%,rgba(15,25,10,.2) 100%)', gradeOpacity:.12 },
+      grade:'linear-gradient(180deg,rgba(30,60,30,.25) 0%,transparent 50%,rgba(15,25,10,.2) 100%)', gradeOpacity:.12,
+      volume: 0.35 },
     { id:'ocean', videoStart:7.5, videoEnd:23, textStart:12, textEnd:20.5,
       text:"Você tem a profundidade de quem\nnão precisa provar nada.",
-      grade:'linear-gradient(180deg,rgba(15,40,70,.3) 0%,transparent 50%,rgba(8,18,35,.2) 100%)', gradeOpacity:.15 },
+      grade:'linear-gradient(180deg,rgba(15,40,70,.3) 0%,transparent 50%,rgba(8,18,35,.2) 100%)', gradeOpacity:.15,
+      volume: 0.55 },
     { id:'sky', videoStart:20.5, videoEnd:38, textStart:26, textEnd:35,
       text:"Você tem o dom de clarear\nqualquer dia.",
-      grade:'linear-gradient(180deg,rgba(50,70,90,.2) 0%,transparent 50%,rgba(35,45,60,.15) 100%)', gradeOpacity:.1 },
+      grade:'linear-gradient(180deg,rgba(50,70,90,.2) 0%,transparent 50%,rgba(35,45,60,.15) 100%)', gradeOpacity:.1,
+      volume: 0.75 },
     { id:'space', videoStart:35.5, videoEnd:999, textStart:41, textEnd:52,
       text:"Entre tudo que poderia ser…\nfoi você.",
-      grade:'linear-gradient(180deg,rgba(8,8,25,.4) 0%,transparent 50%,rgba(4,4,12,.3) 100%)', gradeOpacity:.2 }
+      grade:'linear-gradient(180deg,rgba(8,8,25,.4) 0%,transparent 50%,rgba(4,4,12,.3) 100%)', gradeOpacity:.2,
+      volume: 1.0 }
   ];
 
   const FADE_DELAY = 1.5;
 
-  // ─── ELEMENTS ───
+  // Ambient loop: soft opening of the song
+  const LOOP_START = 0;     // seconds
+  const LOOP_END   = 25;    // seconds
+  const LOOP_VOL   = 0.15;  // very quiet ambient
+
+  // ═══════════════════════════════════
+  //  ELEMENTS
+  // ═══════════════════════════════════
+
   const vids = {
     forest: document.getElementById('vid-forest'),
     ocean:  document.getElementById('vid-ocean'),
@@ -264,6 +302,8 @@
   const infA = document.getElementById('inf-a');
   const infB = document.getElementById('inf-b');
 
+  const musicMain    = document.getElementById('music-main');
+  const musicLoop    = document.getElementById('music-loop');
   const loading      = document.getElementById('loading');
   const loadBar      = document.getElementById('load-bar');
   const startScreen  = document.getElementById('start-screen');
@@ -274,67 +314,158 @@
   const fadeToBlack  = document.getElementById('fade-to-black');
   const finalOverlay = document.getElementById('final-overlay');
   const replayBtn    = document.getElementById('replay-btn');
+  const muteBtn      = document.getElementById('mute-btn');
+  const iconSound    = document.getElementById('icon-sound');
+  const iconMuted    = document.getElementById('icon-muted');
 
-  // ─── STATE ───
-  let isPlaying = false;
-  let startTime = 0;
-  let currentText = '';
-  let currentPhaseId = '';
+  // ═══════════════════════════════════
+  //  STATE
+  // ═══════════════════════════════════
+
+  let isPlaying = false, startTime = 0, currentText = '', currentPhaseId = '';
   let fadeStarted = false;
-  let infRunning = false;
-  let infCurrent = 'a'; // which inf video is currently active
-  let infLoopTimer = null;
+  let infRunning = false, infCurrent = 'a', infLoopTimer = null;
+  let isMuted = false;
+  let targetVolume = 0.35;
+  let lastPhaseVolume = '';
+  let mainMusicEnded = false;
+  let ambientLoopStarted = false;
+  let loopCheckTimer = null;
+
+  // ═══════════════════════════════════
+  //  AUDIO SYSTEM
+  //
+  //  Main music: plays full 1:46.
+  //  Volume ramps per phase (forest→space).
+  //  After main ends: ambient loop fades in
+  //  using the soft opening (0-25s) at 15%.
+  // ═══════════════════════════════════
+
+  function smoothVolume(audio, target, durationMs) {
+    if (isMuted) return;
+    const start = audio.volume;
+    const diff = target - start;
+    if (Math.abs(diff) < 0.01) { audio.volume = target; return; }
+    const startT = performance.now();
+
+    function step(now) {
+      const elapsed = now - startT;
+      const progress = Math.min(1, elapsed / durationMs);
+      // Ease out
+      const ease = 1 - Math.pow(1 - progress, 3);
+      audio.volume = Math.max(0, Math.min(1, start + diff * ease));
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  function startMainMusic() {
+    mainMusicEnded = false;
+    ambientLoopStarted = false;
+    musicMain.currentTime = 0;
+    musicMain.volume = 0;
+    musicMain.play().catch(() => console.warn('Audio blocked'));
+
+    // Monitor main music ending → transition to ambient loop
+    musicMain.onended = function() {
+      mainMusicEnded = true;
+      startAmbientLoop();
+    };
+  }
+
+  function startAmbientLoop() {
+    if (ambientLoopStarted || isMuted) return;
+    ambientLoopStarted = true;
+
+    musicLoop.currentTime = LOOP_START;
+    musicLoop.volume = 0;
+    musicLoop.play().catch(() => {});
+
+    // Fade in ambient
+    smoothVolume(musicLoop, LOOP_VOL, 4000);
+
+    // Keep looping within LOOP_START → LOOP_END
+    if (loopCheckTimer) clearInterval(loopCheckTimer);
+    loopCheckTimer = setInterval(() => {
+      if (!ambientLoopStarted) { clearInterval(loopCheckTimer); return; }
+      if (musicLoop.currentTime >= LOOP_END - 2) {
+        // Crossfade: fade out, seek back, fade in
+        smoothVolume(musicLoop, 0, 2000);
+        setTimeout(() => {
+          musicLoop.currentTime = LOOP_START;
+          if (!isMuted && ambientLoopStarted) {
+            smoothVolume(musicLoop, LOOP_VOL, 3000);
+          }
+        }, 2200);
+      }
+    }, 500);
+  }
+
+  function stopAllAudio() {
+    musicMain.pause();
+    musicMain.currentTime = 0;
+    musicMain.onended = null;
+    musicLoop.pause();
+    musicLoop.currentTime = 0;
+    mainMusicEnded = false;
+    ambientLoopStarted = false;
+    if (loopCheckTimer) { clearInterval(loopCheckTimer); loopCheckTimer = null; }
+  }
+
+  // ─── MUTE ───
+  muteBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    isMuted = !isMuted;
+    if (isMuted) {
+      musicMain.volume = 0;
+      musicLoop.volume = 0;
+      iconSound.style.display = 'none';
+      iconMuted.style.display = 'block';
+    } else {
+      if (!mainMusicEnded) {
+        musicMain.volume = targetVolume;
+      }
+      if (ambientLoopStarted) {
+        musicLoop.volume = LOOP_VOL;
+      }
+      iconSound.style.display = 'block';
+      iconMuted.style.display = 'none';
+    }
+  });
 
   // ═══════════════════════════════════
   //  INFINITY SEAMLESS LOOP
-  //  Two identical videos. When one
-  //  nears its end, the other starts
-  //  from 0 and crossfades in.
-  //  Result: smooth continuous loop.
   // ═══════════════════════════════════
 
   function infStart() {
     if (infRunning) return;
     infRunning = true;
     infCurrent = 'a';
-
     infA.currentTime = 0;
     infA.play().catch(() => {});
     infA.classList.add('active');
     infB.classList.remove('active');
     infB.pause();
-
-    // Poll to detect near-end and crossfade
     infLoopTimer = setInterval(infCheckLoop, 200);
   }
 
   function infCheckLoop() {
     if (!infRunning) return;
-
     const current = infCurrent === 'a' ? infA : infB;
     const next    = infCurrent === 'a' ? infB : infA;
-
-    // 3 seconds before end, start crossfade
     if (current.duration && current.currentTime >= current.duration - 3) {
-      // Only trigger once per cycle
       if (next.classList.contains('active')) return;
-
       next.currentTime = 0;
       next.play().catch(() => {});
       next.classList.add('active');
-
-      // Fade out current
       current.classList.remove('active');
       current.classList.add('fading-out');
-
       const oldId = infCurrent;
       infCurrent = infCurrent === 'a' ? 'b' : 'a';
-
       setTimeout(() => {
         const old = oldId === 'a' ? infA : infB;
         old.classList.remove('fading-out');
-        old.pause();
-        old.currentTime = 0;
+        old.pause(); old.currentTime = 0;
       }, 3500);
     }
   }
@@ -346,10 +477,13 @@
     infB.pause(); infB.currentTime = 0; infB.classList.remove('active','fading-out');
   }
 
-  // ─── LOAD ───
+  // ═══════════════════════════════════
+  //  LOAD
+  // ═══════════════════════════════════
+
   const loadKeys = ['forest','ocean','sky','space'];
   let loaded = 0;
-  const totalToLoad = 5;
+  const totalToLoad = 6;
 
   function onReady() {
     loaded++;
@@ -373,17 +507,23 @@
   infA.addEventListener('canplaythrough', function h() { infA.removeEventListener('canplaythrough',h); onReady(); });
   infA.addEventListener('error', function h() { infA.removeEventListener('error',h); onReady(); });
   setTimeout(() => { if (loaded < totalToLoad) onReady(); }, 15000);
-  infA.load();
-  infB.load();
+  infA.load(); infB.load();
 
-  // ─── MAIN ───
+  musicMain.addEventListener('canplaythrough', function h() { musicMain.removeEventListener('canplaythrough',h); onReady(); });
+  musicMain.addEventListener('error', function h() { musicMain.removeEventListener('error',h); onReady(); });
+  setTimeout(() => { if (loaded < totalToLoad) onReady(); }, 15000);
+  musicMain.load(); musicLoop.load();
+
+  // ═══════════════════════════════════
+  //  MAIN ENGINE
+  // ═══════════════════════════════════
+
   function tick(now) {
     if (!isPlaying) return;
     requestAnimationFrame(tick);
 
     const time = (now - startTime) / 1000;
 
-    // Phase switching
     if (!fadeStarted) {
       let active = PHASES[0];
       for (let i = PHASES.length - 1; i >= 0; i--) {
@@ -400,7 +540,6 @@
             if (vids[old]) { vids[old].classList.remove('fading-out'); if (old !== 'space') vids[old].pause(); }
           }, 4500);
         }
-
         const next = vids[active.id];
         next.currentTime = 0;
         next.play().catch(() => {});
@@ -409,6 +548,13 @@
         colorGrade.style.background = active.grade;
         colorGrade.style.opacity = active.gradeOpacity;
         currentPhaseId = active.id;
+      }
+
+      // Music volume ramp per phase
+      if (active.id !== lastPhaseVolume && !mainMusicEnded) {
+        targetVolume = active.volume;
+        smoothVolume(musicMain, active.volume, 3000);
+        lastPhaseVolume = active.id;
       }
 
       if (active.id === 'sky' && time >= PHASES[2].textStart - 1 && time <= PHASES[2].textEnd + 1) {
@@ -440,28 +586,27 @@
     const fadeTime = PHASES[3].textEnd + FADE_DELAY;
     if (time >= fadeTime && !fadeStarted) {
       fadeStarted = true;
-      isPlaying = false; // stop main tick after scheduling fade
+      isPlaying = false;
       textEl.classList.remove('visible');
       currentText = '';
       skyBackdrop.classList.remove('active');
 
-      // Start infinity behind black
+      // Music: let it keep playing naturally — no cut!
+      // It will continue through the fade and infinity reveal.
+      // When it ends (~1:46), onended triggers the ambient loop.
+
       infStart();
 
-      // 3s fade to black
       fadeToBlack.style.transition = 'opacity 3s ease';
       fadeToBlack.style.opacity = '1';
       progressBar.style.width = '100%';
 
-      // After black, kill phases, reveal infinity
       setTimeout(() => {
         loadKeys.forEach(k => {
           vids[k].classList.remove('active','fading-out');
-          vids[k].pause();
-          vids[k].currentTime = 0;
+          vids[k].pause(); vids[k].currentTime = 0;
         });
         colorGrade.style.opacity = '0';
-
         fadeToBlack.style.transition = 'opacity 4s ease';
         fadeToBlack.style.opacity = '0';
         progressBar.style.opacity = '0';
@@ -472,15 +617,24 @@
     }
   }
 
-  // ─── START ───
+  // ═══════════════════════════════════
+  //  START
+  // ═══════════════════════════════════
+
   function beginExperience() {
     startScreen.classList.add('hidden');
+
+    // Unlock & start audio on user gesture
+    startMainMusic();
+
     setTimeout(() => {
       isPlaying = true;
       fadeStarted = false;
       startTime = performance.now();
       currentPhaseId = '';
       currentText = '';
+      lastPhaseVolume = '';
+      muteBtn.classList.add('visible');
       requestAnimationFrame(tick);
     }, 900);
   }
@@ -488,58 +642,52 @@
   startScreen.addEventListener('click', beginExperience);
   startScreen.addEventListener('touchend', e => { e.preventDefault(); beginExperience(); });
 
-  // ─── REPLAY ───
-  replayBtn.addEventListener('click', () => {
-    // 1. Immediately stop infinity loop
-    infStop();
+  // ═══════════════════════════════════
+  //  REPLAY
+  // ═══════════════════════════════════
 
-    // 2. Fade everything to black first
+  replayBtn.addEventListener('click', () => {
+    infStop();
+    stopAllAudio();
+
     fadeToBlack.style.transition = 'opacity 1.5s ease';
     fadeToBlack.style.opacity = '1';
 
-    // 3. Hide UI elements
     finalOverlay.style.transition = 'opacity 0.8s ease';
     finalOverlay.classList.remove('visible');
     replayBtn.classList.remove('visible');
 
-    // 4. After black, do full reset then restart
     setTimeout(() => {
-      // Reset final overlay transition
       finalOverlay.style.transition = 'opacity 4s ease';
-
-      // Clear text
       textEl.classList.remove('visible');
-      currentText = '';
-      currentPhaseId = '';
-
-      // Reset progress
       progressBar.style.width = '0%';
       progressBar.style.opacity = '1';
-
-      // Reset color grade & sky backdrop
       colorGrade.style.opacity = '0';
       skyBackdrop.classList.remove('active');
-
-      // Reset state
+      currentText = '';
+      currentPhaseId = '';
+      lastPhaseVolume = '';
       fadeStarted = false;
 
-      // Stop and reset ALL videos
+      fadeToBlack.style.transition = 'none';
+      fadeToBlack.style.opacity = '0';
+
       loadKeys.forEach(k => {
         vids[k].classList.remove('active','fading-out');
-        vids[k].pause();
-        vids[k].currentTime = 0;
+        vids[k].pause(); vids[k].currentTime = 0;
       });
 
-      // Small pause, then lift black and start
+      // Restart music
+      startMainMusic();
+      muteBtn.classList.add('visible');
+
       setTimeout(() => {
         fadeToBlack.style.transition = 'opacity 2s ease';
         fadeToBlack.style.opacity = '0';
-
         isPlaying = true;
         startTime = performance.now();
         requestAnimationFrame(tick);
       }, 500);
-
     }, 1800);
   });
 
