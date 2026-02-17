@@ -19,7 +19,6 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* ─── VIDEOS ─── */
   .video-layer {
     position: fixed;
     top: 50%; left: 50%;
@@ -27,8 +26,7 @@
     width: auto; height: auto;
     transform: translate(-50%, -50%);
     object-fit: cover;
-    opacity: 0;
-    z-index: 1;
+    opacity: 0; z-index: 1;
     pointer-events: none;
     will-change: opacity;
     transition: opacity 4s ease;
@@ -36,20 +34,21 @@
   .video-layer.active { opacity: 1; z-index: 2; }
   .video-layer.fading-out { opacity: 0; z-index: 1; }
 
-  /* ─── INFINITY CANVAS ─── */
-  #infinity-canvas {
+  /* Infinity: two identical videos crossfading for seamless loop */
+  .infinity-layer {
     position: fixed;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    top: 50%; left: 50%;
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
+    transform: translate(-50%, -50%);
     object-fit: cover;
-    z-index: 0;
-    opacity: 0;
+    z-index: 0; opacity: 0;
     pointer-events: none;
-    transition: opacity 4s ease;
+    will-change: opacity;
+    transition: opacity 3s ease;
   }
-  #infinity-canvas.active { opacity: 1; }
+  .infinity-layer.active { opacity: 1; }
 
-  /* ─── FADE TO BLACK ─── */
   #fade-to-black {
     position: fixed; top: 0; left: 0;
     width: 100%; height: 100%;
@@ -57,17 +56,14 @@
     opacity: 0; pointer-events: none;
   }
 
-  /* ─── CINEMATIC OVERLAYS ─── */
   .vignette {
-    position: fixed; top: 0; left: 0;
-    width: 100%; height: 100%;
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     pointer-events: none; z-index: 10;
     background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.5) 100%);
   }
 
   .film-grain {
-    position: fixed; top: -50%; left: -50%;
-    width: 200%; height: 200%;
+    position: fixed; top: -50%; left: -50%; width: 200%; height: 200%;
     pointer-events: none; z-index: 11; opacity: 0.025;
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
     animation: grain 0.5s steps(1) infinite;
@@ -93,7 +89,14 @@
     transition: background 5s ease, opacity 5s ease;
   }
 
-  /* ─── TEXT — more legible ─── */
+  #sky-backdrop {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    pointer-events: none; z-index: 19;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0.35) 0%, transparent 70%);
+    opacity: 0; transition: opacity 3s ease;
+  }
+  #sky-backdrop.active { opacity: 1; }
+
   #overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
@@ -101,77 +104,46 @@
   }
 
   .cinematic-text {
-    color: #fff;
-    font-weight: 300;
+    color: #fff; font-weight: 300;
     font-size: clamp(1.15rem, 3.2vw, 2.15rem);
-    text-align: center;
-    max-width: 72vw;
-    line-height: 1.9;
-    letter-spacing: 0.1em;
-    opacity: 0;
-    transform: translateY(14px);
+    text-align: center; max-width: 72vw;
+    line-height: 1.9; letter-spacing: 0.1em;
+    opacity: 0; transform: translateY(14px);
     transition: opacity 3s ease, transform 3.2s ease;
     text-shadow:
-      0 0 20px rgba(0,0,0,1),
-      0 0 50px rgba(0,0,0,0.95),
-      0 0 100px rgba(0,0,0,0.8),
+      0 0 15px rgba(0,0,0,1),
+      0 0 40px rgba(0,0,0,0.95),
+      0 0 80px rgba(0,0,0,0.85),
+      0 0 120px rgba(0,0,0,0.6),
       0 2px 8px rgba(0,0,0,1);
     padding: 0 1.5rem;
   }
   .cinematic-text.visible { opacity: 1; transform: translateY(0); }
-
   @media (max-width: 768px) {
-    .cinematic-text {
-      max-width: 88vw; line-height: 2;
-      letter-spacing: 0.06em;
-      font-size: clamp(1.05rem, 4.8vw, 1.45rem);
-    }
+    .cinematic-text { max-width: 88vw; line-height: 2; letter-spacing: 0.06em; font-size: clamp(1.05rem, 4.8vw, 1.45rem); }
   }
 
-  /* ─── START SCREEN ─── */
   #start-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    z-index: 100; cursor: pointer;
-    transition: opacity 3s ease;
+    z-index: 100; cursor: pointer; transition: opacity 3s ease;
   }
   #start-screen.hidden { opacity: 0; pointer-events: none; }
+  #start-screen h1 { color: #fff; font-weight: 300; font-size: clamp(1.5rem, 4.5vw, 2.8rem); letter-spacing: 0.22em; margin-bottom: 2rem; text-transform: lowercase; }
+  #start-screen .subtitle { color: rgba(255,255,255,0.4); font-weight: 300; font-style: italic; font-size: clamp(0.8rem, 2vw, 1rem); letter-spacing: 0.14em; margin-bottom: 3rem; }
+  .play-btn { width: 62px; height: 62px; border: 1px solid rgba(255,255,255,0.3); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-bottom: 1.5rem; transition: all 0.5s ease; }
+  .play-btn:hover { border-color: rgba(255,255,255,0.55); transform: scale(1.07); }
+  .play-btn svg { width: 16px; height: 16px; fill: rgba(255,255,255,0.55); margin-left: 3px; }
+  .play-hint { color: rgba(255,255,255,0.35); font-weight: 300; font-size: clamp(0.65rem, 1.5vw, 0.78rem); letter-spacing: 0.35em; text-transform: uppercase; animation: breathe 3s ease-in-out infinite; }
+  @keyframes breathe { 0%,100% { opacity: 0.2; } 50% { opacity: 0.6; } }
 
-  #start-screen h1 {
-    color: #F2F2F2; font-weight: 300;
-    font-size: clamp(1.5rem, 4.5vw, 2.8rem);
-    letter-spacing: 0.22em; margin-bottom: 2rem; text-transform: lowercase;
-  }
-  #start-screen .subtitle {
-    color: rgba(242,242,242,0.2); font-weight: 300; font-style: italic;
-    font-size: clamp(0.75rem, 1.8vw, 0.95rem);
-    letter-spacing: 0.14em; margin-bottom: 3rem;
-  }
-  .play-btn {
-    width: 62px; height: 62px;
-    border: 1px solid rgba(242,242,242,0.2); border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 1.5rem; transition: all 0.5s ease;
-  }
-  .play-btn:hover { border-color: rgba(242,242,242,0.45); transform: scale(1.07); }
-  .play-btn svg { width: 16px; height: 16px; fill: rgba(242,242,242,0.45); margin-left: 3px; }
-  .play-hint {
-    color: rgba(242,242,242,0.22); font-weight: 300;
-    font-size: clamp(0.6rem, 1.4vw, 0.75rem);
-    letter-spacing: 0.35em; text-transform: uppercase;
-    animation: breathe 3s ease-in-out infinite;
-  }
-  @keyframes breathe { 0%,100% { opacity: 0.15; } 50% { opacity: 0.5; } }
-
-  /* ─── PROGRESS ─── */
   #progress-bar {
     position: fixed; bottom: 0; left: 0; height: 2px;
     background: linear-gradient(90deg, rgba(242,242,242,0.02), rgba(242,242,242,0.15));
     z-index: 25; width: 0%; transition: width 0.4s linear, opacity 2s ease;
   }
 
-  /* ─── FINAL OVERLAY ─── */
   #final-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     display: flex; flex-direction: column;
@@ -180,35 +152,22 @@
     transition: opacity 4s ease;
   }
   #final-overlay.visible { opacity: 1; pointer-events: auto; }
-
   #final-overlay .heart {
     font-size: clamp(1.6rem, 3vw, 2.2rem);
-    color: rgba(255,255,255,0.75);
-    margin-bottom: 1rem;
+    color: rgba(255,255,255,0.75); margin-bottom: 1rem;
     animation: heartbeat 2.5s ease-in-out infinite;
     text-shadow: 0 0 30px rgba(255,255,255,0.12);
   }
-  @keyframes heartbeat {
-    0%,100% { transform: scale(1); }
-    15% { transform: scale(1.12); }
-    30% { transform: scale(1); }
-    45% { transform: scale(1.08); }
-    60% { transform: scale(1); }
-  }
-
+  @keyframes heartbeat { 0%,100% { transform: scale(1); } 15% { transform: scale(1.12); } 30% { transform: scale(1); } 45% { transform: scale(1.08); } 60% { transform: scale(1); } }
   #final-overlay .final-text {
-    color: rgba(255,255,255,0.65);
-    font-weight: 300; font-style: italic;
+    color: rgba(255,255,255,0.65); font-weight: 300; font-style: italic;
     font-size: clamp(0.9rem, 2.2vw, 1.15rem);
     letter-spacing: 0.12em; margin-bottom: 2.5rem;
     text-shadow: 0 0 20px rgba(0,0,0,0.5);
   }
-
   #replay-btn {
-    color: rgba(255,255,255,0.25);
-    font-family: 'Cormorant Garamond', serif;
-    font-weight: 300; font-size: 0.72rem;
-    letter-spacing: 0.3em; text-transform: lowercase;
+    color: rgba(255,255,255,0.25); font-family: 'Cormorant Garamond', serif;
+    font-weight: 300; font-size: 0.72rem; letter-spacing: 0.3em; text-transform: lowercase;
     background: none; border: 1px solid rgba(255,255,255,0.12);
     padding: 0.5rem 1.5rem; cursor: pointer; border-radius: 2px;
     opacity: 0; pointer-events: none;
@@ -217,20 +176,14 @@
   #replay-btn.visible { opacity: 1; pointer-events: auto; }
   #replay-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.3); }
 
-  /* ─── LOADING ─── */
   #loading {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background: #000; z-index: 150;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
     transition: opacity 1.5s ease;
   }
   #loading.hidden { opacity: 0; pointer-events: none; }
-  #loading .load-text {
-    color: rgba(242,242,242,0.35); font-weight: 300;
-    font-size: 0.82rem; letter-spacing: 0.3em;
-    text-transform: lowercase; margin-bottom: 1.5rem;
-  }
+  #loading .load-text { color: rgba(242,242,242,0.35); font-weight: 300; font-size: 0.82rem; letter-spacing: 0.3em; text-transform: lowercase; margin-bottom: 1.5rem; }
   #loading .load-bar-bg { width: 100px; height: 1px; background: rgba(242,242,242,0.08); overflow: hidden; }
   #loading .load-bar { height: 100%; width: 0%; background: rgba(242,242,242,0.35); transition: width 0.3s ease; }
 </style>
@@ -249,19 +202,21 @@
   <div class="play-hint">toque para iniciar</div>
 </div>
 
+<!-- Phase videos -->
 <video id="vid-forest" class="video-layer" muted playsinline preload="auto" src="forest.mp4"></video>
 <video id="vid-ocean"  class="video-layer" muted playsinline preload="auto" loop src="ocean.mp4"></video>
 <video id="vid-sky"    class="video-layer" muted playsinline preload="auto" loop src="sky.mp4"></video>
 <video id="vid-space"  class="video-layer" muted playsinline preload="auto" src="space.mp4"></video>
 
-<video id="vid-infinity-src" muted playsinline preload="auto" src="infinity.mp4" style="display:none;"></video>
-<canvas id="infinity-canvas"></canvas>
+<!-- Infinity: two copies for seamless crossfade loop -->
+<video id="inf-a" class="infinity-layer" muted playsinline preload="auto" src="infinity.mp4"></video>
+<video id="inf-b" class="infinity-layer" muted playsinline preload="auto" src="infinity.mp4"></video>
 
 <div id="fade-to-black"></div>
-
 <div class="vignette"></div>
 <div class="film-grain"></div>
 <div id="color-grade"></div>
+<div id="sky-backdrop"></div>
 <div class="letterbox top"></div>
 <div class="letterbox bottom"></div>
 
@@ -281,39 +236,22 @@
 (function() {
   'use strict';
 
-  // ═══════════════════════════════════════
-  //  PHASES
-  // ═══════════════════════════════════════
   const PHASES = [
-    {
-      id: 'forest', videoStart: 0, videoEnd: 10,
-      textStart: 1.5, textEnd: 8.5,
-      text: "Entre milhões de caminhos possíveis…\neu encontrei você.",
-      grade: 'linear-gradient(180deg, rgba(30,60,30,0.25) 0%, transparent 50%, rgba(15,25,10,0.2) 100%)',
-      gradeOpacity: 0.12
-    },
-    {
-      id: 'ocean', videoStart: 7.5, videoEnd: 23,
-      textStart: 12, textEnd: 20.5,
-      text: "Você tem a profundidade de quem\nnão precisa provar nada.",
-      grade: 'linear-gradient(180deg, rgba(15,40,70,0.3) 0%, transparent 50%, rgba(8,18,35,0.2) 100%)',
-      gradeOpacity: 0.15
-    },
-    {
-      id: 'sky', videoStart: 20.5, videoEnd: 38,
-      textStart: 26, textEnd: 35,
-      text: "Você tem o dom de clarear\nqualquer dia.",
-      grade: 'linear-gradient(180deg, rgba(50,70,90,0.2) 0%, transparent 50%, rgba(35,45,60,0.15) 100%)',
-      gradeOpacity: 0.1
-    },
-    {
-      id: 'space', videoStart: 35.5, videoEnd: 999,
-      textStart: 41, textEnd: 54,
-      text: "Entre tudo que poderia ser…\nfoi você.",
-      grade: 'linear-gradient(180deg, rgba(8,8,25,0.4) 0%, transparent 50%, rgba(4,4,12,0.3) 100%)',
-      gradeOpacity: 0.2
-    }
+    { id:'forest', videoStart:0, videoEnd:10, textStart:1.5, textEnd:8.5,
+      text:"Entre milhões de caminhos possíveis…\neu encontrei você.",
+      grade:'linear-gradient(180deg,rgba(30,60,30,.25) 0%,transparent 50%,rgba(15,25,10,.2) 100%)', gradeOpacity:.12 },
+    { id:'ocean', videoStart:7.5, videoEnd:23, textStart:12, textEnd:20.5,
+      text:"Você tem a profundidade de quem\nnão precisa provar nada.",
+      grade:'linear-gradient(180deg,rgba(15,40,70,.3) 0%,transparent 50%,rgba(8,18,35,.2) 100%)', gradeOpacity:.15 },
+    { id:'sky', videoStart:20.5, videoEnd:38, textStart:26, textEnd:35,
+      text:"Você tem o dom de clarear\nqualquer dia.",
+      grade:'linear-gradient(180deg,rgba(50,70,90,.2) 0%,transparent 50%,rgba(35,45,60,.15) 100%)', gradeOpacity:.1 },
+    { id:'space', videoStart:35.5, videoEnd:999, textStart:41, textEnd:52,
+      text:"Entre tudo que poderia ser…\nfoi você.",
+      grade:'linear-gradient(180deg,rgba(8,8,25,.4) 0%,transparent 50%,rgba(4,4,12,.3) 100%)', gradeOpacity:.2 }
   ];
+
+  const FADE_DELAY = 1.5;
 
   // ─── ELEMENTS ───
   const vids = {
@@ -323,9 +261,8 @@
     space:  document.getElementById('vid-space')
   };
 
-  const infinitySrc    = document.getElementById('vid-infinity-src');
-  const infinityCanvas = document.getElementById('infinity-canvas');
-  const ctx            = infinityCanvas.getContext('2d');
+  const infA = document.getElementById('inf-a');
+  const infB = document.getElementById('inf-b');
 
   const loading      = document.getElementById('loading');
   const loadBar      = document.getElementById('load-bar');
@@ -333,89 +270,80 @@
   const textEl       = document.getElementById('cinematic-text');
   const progressBar  = document.getElementById('progress-bar');
   const colorGrade   = document.getElementById('color-grade');
+  const skyBackdrop  = document.getElementById('sky-backdrop');
   const fadeToBlack  = document.getElementById('fade-to-black');
   const finalOverlay = document.getElementById('final-overlay');
   const replayBtn    = document.getElementById('replay-btn');
 
-  let isPlaying = false, startTime = 0, currentText = '', currentPhaseId = '';
-  let spaceEnded = false, fadeStarted = false, infinityRevealed = false;
-  let infinityRunning = false, infinityDir = 1;
+  // ─── STATE ───
+  let isPlaying = false;
+  let startTime = 0;
+  let currentText = '';
+  let currentPhaseId = '';
+  let fadeStarted = false;
+  let infRunning = false;
+  let infCurrent = 'a'; // which inf video is currently active
+  let infLoopTimer = null;
 
-  // ─── INFINITY PING-PONG ───
-  let infDuration = 0;
-  let infTime = 0;
-  let lastInfTick = 0;
+  // ═══════════════════════════════════
+  //  INFINITY SEAMLESS LOOP
+  //  Two identical videos. When one
+  //  nears its end, the other starts
+  //  from 0 and crossfades in.
+  //  Result: smooth continuous loop.
+  // ═══════════════════════════════════
 
-  function setupCanvas() {
-    const w = infinitySrc.videoWidth || 1920;
-    const h = infinitySrc.videoHeight || 1080;
-    // Match screen aspect
-    const screenRatio = window.innerWidth / window.innerHeight;
-    const vidRatio = w / h;
-    if (vidRatio > screenRatio) {
-      infinityCanvas.height = window.innerHeight;
-      infinityCanvas.width = window.innerHeight * vidRatio;
-    } else {
-      infinityCanvas.width = window.innerWidth;
-      infinityCanvas.height = window.innerWidth / vidRatio;
+  function infStart() {
+    if (infRunning) return;
+    infRunning = true;
+    infCurrent = 'a';
+
+    infA.currentTime = 0;
+    infA.play().catch(() => {});
+    infA.classList.add('active');
+    infB.classList.remove('active');
+    infB.pause();
+
+    // Poll to detect near-end and crossfade
+    infLoopTimer = setInterval(infCheckLoop, 200);
+  }
+
+  function infCheckLoop() {
+    if (!infRunning) return;
+
+    const current = infCurrent === 'a' ? infA : infB;
+    const next    = infCurrent === 'a' ? infB : infA;
+
+    // 3 seconds before end, start crossfade
+    if (current.duration && current.currentTime >= current.duration - 3) {
+      // Only trigger once per cycle
+      if (next.classList.contains('active')) return;
+
+      next.currentTime = 0;
+      next.play().catch(() => {});
+      next.classList.add('active');
+
+      // Fade out current
+      current.classList.remove('active');
+      current.classList.add('fading-out');
+
+      const oldId = infCurrent;
+      infCurrent = infCurrent === 'a' ? 'b' : 'a';
+
+      setTimeout(() => {
+        const old = oldId === 'a' ? infA : infB;
+        old.classList.remove('fading-out');
+        old.pause();
+        old.currentTime = 0;
+      }, 3500);
     }
   }
 
-  function startInfinity() {
-    if (infinityRunning) return;
-    infinityRunning = true;
-    infinityDir = 1;
-    infTime = 0;
-    infDuration = infinitySrc.duration || 10;
-    infinitySrc.currentTime = 0;
-    infinitySrc.play().catch(() => {});
-    setupCanvas();
-    infinityCanvas.classList.add('active');
-    lastInfTick = performance.now();
-    drawInfinity();
-  }
-
-  function drawInfinity() {
-    if (!infinityRunning) return;
-    requestAnimationFrame(drawInfinity);
-
-    const now = performance.now();
-    const dt = (now - lastInfTick) / 1000;
-    lastInfTick = now;
-
-    // Advance or rewind time
-    infTime += dt * infinityDir;
-
-    // Bounce at boundaries
-    if (infTime >= infDuration) {
-      infTime = infDuration - 0.01;
-      infinityDir = -1;
-      infinitySrc.pause();
-    }
-    if (infTime <= 0) {
-      infTime = 0.01;
-      infinityDir = 1;
-      infinitySrc.currentTime = 0;
-      infinitySrc.play().catch(() => {});
-    }
-
-    // When going forward, let video play naturally
-    // When going backward, seek manually
-    if (infinityDir === -1) {
-      infinitySrc.currentTime = infTime;
-    }
-
-    // Draw to canvas
-    try {
-      ctx.drawImage(infinitySrc, 0, 0, infinityCanvas.width, infinityCanvas.height);
-    } catch(e) {}
-  }
-
-  function stopInfinity() {
-    infinityRunning = false;
-    infinitySrc.pause();
-    infinitySrc.currentTime = 0;
-    infinityCanvas.classList.remove('active');
+  function infStop() {
+    infRunning = false;
+    if (infLoopTimer) { clearInterval(infLoopTimer); infLoopTimer = null; }
+    infA.pause(); infA.currentTime = 0; infA.classList.remove('active','fading-out');
+    infB.pause(); infB.currentTime = 0; infB.classList.remove('active','fading-out');
   }
 
   // ─── LOAD ───
@@ -436,132 +364,119 @@
 
   loadKeys.forEach(key => {
     const v = vids[key];
-    v.addEventListener('canplaythrough', function h() { v.removeEventListener('canplaythrough', h); onReady(); });
-    v.addEventListener('error', function h() { v.removeEventListener('error', h); onReady(); });
+    v.addEventListener('canplaythrough', function h() { v.removeEventListener('canplaythrough',h); onReady(); });
+    v.addEventListener('error', function h() { v.removeEventListener('error',h); onReady(); });
     setTimeout(() => { if (loaded < totalToLoad) onReady(); }, 15000);
     v.load();
   });
 
-  infinitySrc.addEventListener('canplaythrough', function h() { infinitySrc.removeEventListener('canplaythrough', h); onReady(); });
-  infinitySrc.addEventListener('error', function h() { infinitySrc.removeEventListener('error', h); onReady(); });
+  infA.addEventListener('canplaythrough', function h() { infA.removeEventListener('canplaythrough',h); onReady(); });
+  infA.addEventListener('error', function h() { infA.removeEventListener('error',h); onReady(); });
   setTimeout(() => { if (loaded < totalToLoad) onReady(); }, 15000);
-  infinitySrc.load();
+  infA.load();
+  infB.load();
 
-  // ─── SPACE ENDED → triggers fade ───
-  vids.space.addEventListener('ended', function() {
-    spaceEnded = true;
-  });
-
-  // ─── MAIN ENGINE ───
+  // ─── MAIN ───
   function tick(now) {
     if (!isPlaying) return;
     requestAnimationFrame(tick);
 
     const time = (now - startTime) / 1000;
 
-    // ─── Phase video switching ───
-    if (!spaceEnded) {
+    // Phase switching
+    if (!fadeStarted) {
       let active = PHASES[0];
       for (let i = PHASES.length - 1; i >= 0; i--) {
         if (time >= PHASES[i].videoStart) { active = PHASES[i]; break; }
       }
 
       if (active.id !== currentPhaseId) {
-        // Fade out previous
         if (currentPhaseId && vids[currentPhaseId]) {
           const prev = vids[currentPhaseId];
           prev.classList.remove('active');
           prev.classList.add('fading-out');
           const old = currentPhaseId;
           setTimeout(() => {
-            if (vids[old]) {
-              vids[old].classList.remove('fading-out');
-              if (old !== 'space') vids[old].pause();
-            }
+            if (vids[old]) { vids[old].classList.remove('fading-out'); if (old !== 'space') vids[old].pause(); }
           }, 4500);
         }
 
-        // Fade in next
         const next = vids[active.id];
         next.currentTime = 0;
         next.play().catch(() => {});
         next.classList.remove('fading-out');
         next.classList.add('active');
-
         colorGrade.style.background = active.grade;
         colorGrade.style.opacity = active.gradeOpacity;
-
         currentPhaseId = active.id;
       }
 
-      // Progress (estimate based on space video)
-      const spaceDur = vids.space.duration || 30;
-      const totalEstimate = PHASES[3].videoStart + spaceDur;
-      progressBar.style.width = Math.min(100, (time / totalEstimate * 100)) + '%';
+      if (active.id === 'sky' && time >= PHASES[2].textStart - 1 && time <= PHASES[2].textEnd + 1) {
+        skyBackdrop.classList.add('active');
+      } else {
+        skyBackdrop.classList.remove('active');
+      }
+
+      const totalEst = PHASES[3].textEnd + FADE_DELAY + 3;
+      progressBar.style.width = Math.min(100, (time / totalEst * 100)) + '%';
     }
 
-    // ─── Text ───
+    // Text
     let newText = '';
     for (const p of PHASES) {
       if (time >= p.textStart && time <= p.textEnd) { newText = p.text; break; }
     }
-
     if (newText !== currentText) {
-      if (newText === '') {
+      if (newText === '') { textEl.classList.remove('visible'); }
+      else {
+        textEl.innerHTML = newText.replace(/\n/g,'<br>');
         textEl.classList.remove('visible');
-      } else {
-        textEl.innerHTML = newText.replace(/\n/g, '<br>');
-        textEl.classList.remove('visible');
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => { textEl.classList.add('visible'); });
-        });
+        requestAnimationFrame(() => { requestAnimationFrame(() => { textEl.classList.add('visible'); }); });
       }
       currentText = newText;
     }
 
-    // ─── Space ended → 3s fade to black ───
-    if (spaceEnded && !fadeStarted) {
+    // Fade trigger
+    const fadeTime = PHASES[3].textEnd + FADE_DELAY;
+    if (time >= fadeTime && !fadeStarted) {
       fadeStarted = true;
+      isPlaying = false; // stop main tick after scheduling fade
       textEl.classList.remove('visible');
       currentText = '';
+      skyBackdrop.classList.remove('active');
 
       // Start infinity behind black
-      startInfinity();
+      infStart();
 
       // 3s fade to black
       fadeToBlack.style.transition = 'opacity 3s ease';
       fadeToBlack.style.opacity = '1';
-
       progressBar.style.width = '100%';
 
-      // After black, reveal infinity
+      // After black, kill phases, reveal infinity
       setTimeout(() => {
-        // Kill phase videos
         loadKeys.forEach(k => {
           vids[k].classList.remove('active','fading-out');
           vids[k].pause();
+          vids[k].currentTime = 0;
         });
         colorGrade.style.opacity = '0';
 
-        // Slowly lift black
         fadeToBlack.style.transition = 'opacity 4s ease';
         fadeToBlack.style.opacity = '0';
-
         progressBar.style.opacity = '0';
       }, 3500);
 
-      // Show final
       setTimeout(() => { finalOverlay.classList.add('visible'); }, 6000);
       setTimeout(() => { replayBtn.classList.add('visible'); }, 8000);
     }
   }
 
   // ─── START ───
-  function start() {
+  function beginExperience() {
     startScreen.classList.add('hidden');
     setTimeout(() => {
       isPlaying = true;
-      spaceEnded = false;
       fadeStarted = false;
       startTime = performance.now();
       currentPhaseId = '';
@@ -570,48 +485,62 @@
     }, 900);
   }
 
-  startScreen.addEventListener('click', start);
-  startScreen.addEventListener('touchend', e => { e.preventDefault(); start(); });
+  startScreen.addEventListener('click', beginExperience);
+  startScreen.addEventListener('touchend', e => { e.preventDefault(); beginExperience(); });
 
   // ─── REPLAY ───
   replayBtn.addEventListener('click', () => {
-    // Hide everything
+    // 1. Immediately stop infinity loop
+    infStop();
+
+    // 2. Fade everything to black first
+    fadeToBlack.style.transition = 'opacity 1.5s ease';
+    fadeToBlack.style.opacity = '1';
+
+    // 3. Hide UI elements
+    finalOverlay.style.transition = 'opacity 0.8s ease';
     finalOverlay.classList.remove('visible');
     replayBtn.classList.remove('visible');
-    textEl.classList.remove('visible');
-    progressBar.style.width = '0%';
-    progressBar.style.opacity = '1';
-    colorGrade.style.opacity = '0';
-    currentText = '';
-    currentPhaseId = '';
-    spaceEnded = false;
-    fadeStarted = false;
 
-    // Reset fade
-    fadeToBlack.style.transition = 'none';
-    fadeToBlack.style.opacity = '0';
-
-    // Stop infinity
-    stopInfinity();
-
-    // Stop all videos
-    loadKeys.forEach(k => {
-      vids[k].classList.remove('active','fading-out');
-      vids[k].pause();
-      vids[k].currentTime = 0;
-    });
-
-    // Brief pause then restart
+    // 4. After black, do full reset then restart
     setTimeout(() => {
-      isPlaying = true;
-      startTime = performance.now();
-      requestAnimationFrame(tick);
-    }, 800);
-  });
+      // Reset final overlay transition
+      finalOverlay.style.transition = 'opacity 4s ease';
 
-  // ─── RESIZE ───
-  window.addEventListener('resize', () => {
-    if (infinityRunning) setupCanvas();
+      // Clear text
+      textEl.classList.remove('visible');
+      currentText = '';
+      currentPhaseId = '';
+
+      // Reset progress
+      progressBar.style.width = '0%';
+      progressBar.style.opacity = '1';
+
+      // Reset color grade & sky backdrop
+      colorGrade.style.opacity = '0';
+      skyBackdrop.classList.remove('active');
+
+      // Reset state
+      fadeStarted = false;
+
+      // Stop and reset ALL videos
+      loadKeys.forEach(k => {
+        vids[k].classList.remove('active','fading-out');
+        vids[k].pause();
+        vids[k].currentTime = 0;
+      });
+
+      // Small pause, then lift black and start
+      setTimeout(() => {
+        fadeToBlack.style.transition = 'opacity 2s ease';
+        fadeToBlack.style.opacity = '0';
+
+        isPlaying = true;
+        startTime = performance.now();
+        requestAnimationFrame(tick);
+      }, 500);
+
+    }, 1800);
   });
 
 })();
